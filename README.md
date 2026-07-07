@@ -36,3 +36,6 @@ Python Flask backend for CyberShield AI cybersecurity web application.
 
 ## Frontend
 https://github.com/shivraj2121/cybershield-frontend
+
+## Author
+Shivraj Harish Kadam
