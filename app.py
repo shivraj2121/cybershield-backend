@@ -18,7 +18,7 @@ def get_db():
         user=os.getenv('MYSQL_USER'),
         password=os.getenv('MYSQL_PASSWORD'),
         database=os.getenv('MYSQL_DB'),
-        ssl={'ssl': {'ca': True}},
+        ssl_ca=True,
         cursorclass=pymysql.cursors.DictCursor
     )
 
