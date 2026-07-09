@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from groq import Groq
-import pymysql
+import psycopg2
+import psycopg2.extras
 import os
 from dotenv import load_dotenv
 import hashlib
@@ -12,14 +13,7 @@ app = Flask(__name__)
 CORS(app)
 
 def get_db():
-    return pymysql.connect(
-        host=os.getenv('MYSQL_HOST'),
-        port=int(os.getenv('MYSQL_PORT', 3306)),
-        user=os.getenv('MYSQL_USER'),
-        password=os.getenv('MYSQL_PASSWORD'),
-        database=os.getenv('MYSQL_DB'),
-        cursorclass=pymysql.cursors.DictCursor
-    )
+    return psycopg2.connect(os.getenv('DATABASE_URL'))
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -33,7 +27,7 @@ def register():
     try:
         db = get_db()
         cursor = db.cursor()
-        cursor.execute('INSERT INTO users (username, email, password) VALUES (%s, %s, %s)', 
+        cursor.execute('INSERT INTO users (username, email, password) VALUES (%s, %s, %s)',
                       (username, email, password))
         db.commit()
         db.close()
@@ -48,8 +42,8 @@ def login():
     password = hash_password(data.get('password'))
     try:
         db = get_db()
-        cursor = db.cursor()
-        cursor.execute('SELECT * FROM users WHERE email=%s AND password=%s', 
+        cursor = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute('SELECT * FROM users WHERE email=%s AND password=%s',
                       (email, password))
         user = cursor.fetchone()
         db.close()
@@ -76,7 +70,6 @@ def chat():
         )
         return jsonify({'response': completion.choices[0].message.content}), 200
     except Exception as e:
-        print("CHAT ERROR:", str(e))
         return jsonify({'error': str(e)}), 400
 
 @app.route('/api/check-password', methods=['POST'])
